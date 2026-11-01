@@ -58,7 +58,7 @@
         #yes { background: var(--accent); color: #fff; }
         #no  { background: #fff; color: var(--accent); border: 2px solid var(--accent); }
         #message { font-size: 20px; margin-top: 20px; min-height: 28px; font-weight: 600; }
-        .hidden { display: none; }
+        .hidden { display: none !important; }
         .heart {
             position: fixed;
             top: -40px;
@@ -68,11 +68,41 @@
             pointer-events: none;
         }
         @keyframes fall { to { transform: translateY(110vh) rotate(360deg); opacity: 0.8; } }
+
+        /* ===== Intro screen ===== */
+        #intro {
+            position: fixed;
+            inset: 0;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--bg1), var(--bg2));
+            cursor: pointer;
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        #intro.leaving { opacity: 0; transform: scale(1.15); pointer-events: none; }
+        .envelope { font-size: 110px; animation: wiggle 1.4s ease-in-out infinite; }
+        @keyframes wiggle {
+            0%,100% { transform: rotate(-6deg) scale(1); }
+            50% { transform: rotate(6deg) scale(1.1); }
+        }
+        #intro h2 { margin: 12px 0 6px; font-size: 26px; }
+        #intro p { margin: 0; opacity: 0.8; animation: pulse 1.6s infinite; }
+        @keyframes pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
     </style>
 </head>
 <body>
 
-<div class="card" id="card">
+<!-- Intro: tap to open -->
+<div id="intro">
+    <div class="envelope">💌</div>
+    <h2>You have a message for you</h2>
+    <p>Tap to open</p>
+</div>
+
+<div class="card hidden" id="card">
     <div class="emoji" id="emoji">💌</div>
     <h1 id="title">Will you be my date?</h1>
     <div class="buttons" id="buttons">
@@ -83,32 +113,44 @@
 </div>
 
 <!-- YouTube player (tiny, music only) -->
-<div id="player" style="position:fixed;bottom:0;right:0;width:2px;height:2px;opacity:0.01;pointer-events:none;"></div>
+<div id="player" style="position:fixed;bottom:0;right:0;width:200px;height:200px;opacity:0.01;pointer-events:none;"></div>
 
-<script src="https://www.tiktok.com/@timothybondoc16/photo/7698270540867341589?q=ako%20ang%20bagyo&t=1793528926928"></script>
 <script>
     // ====== MUSIC SETTINGS ======
-    const VIDEO_ID = '3A1gqQfpu-s';
-    const CHORUS_START = 60;   // seconds where the chorus begins (change this!)
-    const CHORUS_END = 90;     // seconds where the chorus ends (change this!)
+    const VIDEO_ID = '3dSMi3Xl--E'; // "Ako ang bagyo" by Shean
+    const CHORUS_START = 45;    // seconds where the chorus begins (change this!)
+    const CHORUS_END = 75;      // seconds where the chorus ends (change this!)
     const NO_CLICKS_NEEDED = 3; // music starts on this many "No" clicks
     // ============================
 
     let ytPlayer = null;
     let ytReady = false;
 
+    // Called automatically by the YouTube API once it has loaded
     function onYouTubeIframeAPIReady() {
         ytPlayer = new YT.Player('player', {
             width: '200',
             height: '200',
             videoId: VIDEO_ID,
-            playerVars: { playsinline: 1, controls: 0, rel: 0 },
+            playerVars: { playsinline: 1, controls: 0, rel: 0, origin: location.origin },
             events: { onReady: () => { ytReady = true; } }
         });
     }
 
+    // "Unlock" audio during the first tap (needed on phones/browsers)
+    function unlockAudio() {
+        if (!ytReady) return;
+        try {
+            ytPlayer.mute();
+            ytPlayer.playVideo();
+            setTimeout(() => { ytPlayer.pauseVideo(); }, 150);
+        } catch (e) {}
+    }
+
     function playChorus() {
         if (!ytReady) return;
+        ytPlayer.unMute();
+        ytPlayer.setVolume(100);
         ytPlayer.loadVideoById({
             videoId: VIDEO_ID,
             startSeconds: CHORUS_START,
@@ -120,8 +162,12 @@
         if (ytReady) ytPlayer.stopVideo();
     }
 </script>
+<!-- This must be the YouTube API (not any other link) -->
+<script src="https://www.youtube.com/iframe_api"></script>
 
 <script>
+    const intro = document.getElementById('intro');
+    const card = document.getElementById('card');
     const yes = document.getElementById('yes');
     const no = document.getElementById('no');
     const title = document.getElementById('title');
@@ -139,6 +185,14 @@
         "Last chance! 😭",
         "Sige na, pls! 💔"
     ];
+
+    // Open the envelope
+    intro.addEventListener('click', () => {
+        unlockAudio();
+        intro.classList.add('leaving');
+        card.classList.remove('hidden');
+        setTimeout(() => intro.remove(), 650);
+    });
 
     no.addEventListener('click', () => {
         noCount++;
