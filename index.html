@@ -116,6 +116,28 @@
         #letter .sign { display: block; margin-top: 14px; text-align: right; font-style: italic; color: var(--accent); }
         .cursor::after { content: "|"; animation: blink 0.8s infinite; }
         @keyframes blink { 50% { opacity: 0; } }
+
+        /* ===== On-screen lyrics ===== */
+        #lyrics {
+            position: fixed;
+            left: 50%;
+            bottom: 8vh;
+            transform: translateX(-50%) translateY(10px);
+            max-width: 90vw;
+            padding: 12px 22px;
+            border-radius: 14px;
+            background: rgba(74, 26, 44, 0.6);
+            color: #fff;
+            font-size: 22px;
+            font-weight: 700;
+            text-align: center;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 20;
+            transition: opacity 0.35s ease, transform 0.35s ease;
+        }
+        #lyrics.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     </style>
 </head>
 <body>
@@ -138,6 +160,9 @@
     <div id="letter" class="hidden"></div>
 </div>
 
+<!-- Lyrics shown on screen while the music plays -->
+<div id="lyrics"></div>
+
 <!-- Music file: must be in the same folder as this index.html -->
 <audio id="music" src="akoangbagyo.mp3" preload="auto"></audio>
 
@@ -150,10 +175,53 @@
 
     const music = document.getElementById('music');
 
-    // Stop automatically when the chorus ends
+    // ====== TYPE THE LYRICS HERE ======
+    // Each line is [second it appears, "the text"].
+    // The second is the time in the mp3 (e.g. 1:05 = 65).
+    // Replace these placeholders with your own lines and times.
+    const LYRICS = [
+        [45, "Ako, ako, ako ang bagyo"],
+        [50, "Kulimlim ng langit sa inyong dalawa"],
+        [55, "Bulong ko sa hangin"],
+        [60, "Sana'y di kayo masaya"],
+        [65, "Sa tibay ng bahay na titirhan niyo"],
+        [70, "Tatangayin ko bawat yero"],
+        [75, "Dahil ako, ako ang bagyo"],
+        [80, "Dilim ng paligid buhos ng emosyon"],
+        [85, "Tunog ng pag-ibig sa sama ng panahon"],
+        [90, "Sa tibay ng bahay na titirhan niyo"],
+        [95, "Gigibain ko mga pader niyo"],
+        [100, "Dahil ako, ako ang bagyo"]
+    ];
+    // ==================================
+
+    const lyricsEl = document.getElementById('lyrics');
+    let currentLine = -1;
+
+    function hideLyrics() {
+        lyricsEl.classList.remove('show');
+        currentLine = -1;
+    }
+
+    // Show the right lyric for the current time, stop when the chorus ends
     music.addEventListener('timeupdate', () => {
-        if (music.currentTime >= CHORUS_END) music.pause();
+        if (music.currentTime >= CHORUS_END) { music.pause(); return; }
+        if (music.muted || music.paused) return;
+
+        let idx = -1;
+        for (let i = 0; i < LYRICS.length; i++) {
+            if (music.currentTime >= LYRICS[i][0]) idx = i;
+        }
+        if (idx !== -1 && idx !== currentLine) {
+            currentLine = idx;
+            lyricsEl.classList.remove('show');
+            setTimeout(() => {
+                lyricsEl.textContent = LYRICS[idx][1];
+                lyricsEl.classList.add('show');
+            }, 180);
+        }
     });
+    music.addEventListener('pause', hideLyrics);
 
     // "Unlock" audio during the first tap (needed on phones/browsers)
     function unlockAudio() {
@@ -248,19 +316,19 @@
 
     yes.addEventListener('click', () => {
         stopMusic();
-        title.textContent = "Yay!! See you babyqoeh! 🥰";
+        title.textContent = "Yay!! See you on our date! 🥰";
         emoji.textContent = "💕";
         buttons.classList.add('hidden');
-        message.textContent = "I Love You So Much💖";
+        message.textContent = "You just made my day 💖";
         for (let i = 0; i < 40; i++) setTimeout(spawnHeart, i * 80);
         setInterval(spawnHeart, 300);
         setTimeout(showLetter, 1800); // the letter appears after a short pause
     });
 
     // ====== WRITE YOUR LOVE LETTER HERE ======
-    const LETTER_TO   = "Dear Papi Ingrid,";
-    const LETTER_BODY = "This Letter may fuck up with you\n\nBut I want to say that your a fucking bullshit\nand yung lang tangina mo ka";
-    const LETTER_FROM = "Papi Reily💖";
+    const LETTER_TO   = "Dear [his name],";
+    const LETTER_BODY = "Write your love letter here.\n\nYou can use as many lines as you like.\nPress Enter for a new line.";
+    const LETTER_FROM = "— [your name] 💖";
     const TYPING_SPEED = 45; // milliseconds per letter (lower = faster)
     // =========================================
 
