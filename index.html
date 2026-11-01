@@ -112,58 +112,46 @@
     <div id="message"></div>
 </div>
 
-<!-- YouTube player (tiny, music only) -->
-<div id="player" style="position:fixed;bottom:0;right:0;width:200px;height:200px;opacity:0.01;pointer-events:none;"></div>
+<!-- Music file: must be in the same folder as this index.html -->
+<audio id="music" src="akoangbagyo.mp3" preload="auto"></audio>
 
 <script>
     // ====== MUSIC SETTINGS ======
-    const VIDEO_ID = '3dSMi3Xl--E'; // "Ako ang bagyo" by Shean
     const CHORUS_START = 45;    // seconds where the chorus begins (change this!)
     const CHORUS_END = 75;      // seconds where the chorus ends (change this!)
     const NO_CLICKS_NEEDED = 3; // music starts on this many "No" clicks
     // ============================
 
-    let ytPlayer = null;
-    let ytReady = false;
+    const music = document.getElementById('music');
 
-    // Called automatically by the YouTube API once it has loaded
-    function onYouTubeIframeAPIReady() {
-        ytPlayer = new YT.Player('player', {
-            width: '200',
-            height: '200',
-            videoId: VIDEO_ID,
-            playerVars: { playsinline: 1, controls: 0, rel: 0, origin: location.origin },
-            events: { onReady: () => { ytReady = true; } }
-        });
-    }
+    // Stop automatically when the chorus ends
+    music.addEventListener('timeupdate', () => {
+        if (music.currentTime >= CHORUS_END) music.pause();
+    });
 
     // "Unlock" audio during the first tap (needed on phones/browsers)
     function unlockAudio() {
-        if (!ytReady) return;
-        try {
-            ytPlayer.mute();
-            ytPlayer.playVideo();
-            setTimeout(() => { ytPlayer.pauseVideo(); }, 150);
-        } catch (e) {}
+        music.muted = true;
+        const p = music.play();
+        if (p && p.then) {
+            p.then(() => { music.pause(); music.muted = false; }).catch(() => { music.muted = false; });
+        }
     }
 
     function playChorus() {
-        if (!ytReady) return;
-        ytPlayer.unMute();
-        ytPlayer.setVolume(100);
-        ytPlayer.loadVideoById({
-            videoId: VIDEO_ID,
-            startSeconds: CHORUS_START,
-            endSeconds: CHORUS_END
+        music.muted = false;
+        music.volume = 1;
+        music.currentTime = CHORUS_START;
+        music.play().catch(() => {
+            message.textContent = "Can't find akoangbagyo.mp3 🎵 (check it's in the same folder)";
         });
     }
 
     function stopMusic() {
-        if (ytReady) ytPlayer.stopVideo();
+        music.pause();
+        music.currentTime = 0;
     }
 </script>
-<!-- This must be the YouTube API (not any other link) -->
-<script src="https://www.youtube.com/iframe_api"></script>
 
 <script>
     const intro = document.getElementById('intro');
