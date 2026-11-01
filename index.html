@@ -91,6 +91,31 @@
         #intro h2 { margin: 12px 0 6px; font-size: 26px; }
         #intro p { margin: 0; opacity: 0.8; animation: pulse 1.6s infinite; }
         @keyframes pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+        /* ===== Love letter ===== */
+        #letter {
+            margin-top: 20px;
+            padding: 22px 20px;
+            background: #fffaf0;
+            border: 1px solid #f0d9b5;
+            border-radius: 6px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            font-family: "Georgia", "Times New Roman", serif;
+            text-align: left;
+            line-height: 1.6;
+            max-height: 42vh;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            transform-origin: bottom center;
+            animation: letterRise 1s ease-out both;
+        }
+        @keyframes letterRise {
+            from { opacity: 0; transform: translateY(60px) scale(0.6) rotate(-4deg); }
+            to   { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+        }
+        #letter .sign { display: block; margin-top: 14px; text-align: right; font-style: italic; color: var(--accent); }
+        .cursor::after { content: "|"; animation: blink 0.8s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
     </style>
 </head>
 <body>
@@ -110,6 +135,7 @@
         <button id="no">No 💔</button>
     </div>
     <div id="message"></div>
+    <div id="letter" class="hidden"></div>
 </div>
 
 <!-- Music file: must be in the same folder as this index.html -->
@@ -117,7 +143,7 @@
 
 <script>
     // ====== MUSIC SETTINGS ======
-    const CHORUS_START = 45;    // seconds where the chorus begins (change this!)
+    const CHORUS_START = 1;    // seconds where the chorus begins (change this!)
     const CHORUS_END = 75;      // seconds where the chorus ends (change this!)
     const NO_CLICKS_NEEDED = 3; // music starts on this many "No" clicks
     // ============================
@@ -228,7 +254,38 @@
         message.textContent = "You just made my day 💖";
         for (let i = 0; i < 40; i++) setTimeout(spawnHeart, i * 80);
         setInterval(spawnHeart, 300);
+        setTimeout(showLetter, 1800); // the letter appears after a short pause
     });
+
+    // ====== WRITE YOUR LOVE LETTER HERE ======
+    const LETTER_TO   = "Dear Papi Ingrid,";
+    const LETTER_BODY = "This Letter may fuck up with you\n\nBut I want to say that your a fucking bullshit\nand yung lang tangina mo ka";
+    const LETTER_FROM = "Papi Reily💖";
+    const TYPING_SPEED = 45; // milliseconds per letter (lower = faster)
+    // =========================================
+
+    // Letter rises up, then is "typed" out letter by letter
+    function showLetter() {
+        const letter = document.getElementById('letter');
+        letter.classList.remove('hidden');
+        letter.classList.add('cursor');
+        const fullText = LETTER_TO + "\n\n" + LETTER_BODY;
+        letter.textContent = "";
+        let i = 0;
+        const timer = setInterval(() => {
+            letter.textContent = fullText.slice(0, ++i);
+            letter.scrollTop = letter.scrollHeight;
+            if (i >= fullText.length) {
+                clearInterval(timer);
+                letter.classList.remove('cursor');
+                const sign = document.createElement('span');
+                sign.className = 'sign';
+                sign.textContent = LETTER_FROM;
+                letter.appendChild(sign);
+                letter.scrollTop = letter.scrollHeight;
+            }
+        }, TYPING_SPEED);
+    }
 
     function spawnHeart() {
         const h = document.createElement('div');
