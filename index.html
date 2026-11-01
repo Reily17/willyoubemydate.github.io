@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Will you be my date?</title>
+    <style>
+        :root {
+            --bg1: #ffd1dc;
+            --bg2: #ff9eb5;
+            --accent: #e63977;
+            --text: #4a1a2c;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: "Segoe UI", system-ui, sans-serif;
+            background: linear-gradient(135deg, var(--bg1), var(--bg2));
+            color: var(--text);
+            overflow: hidden;
+            text-align: center;
+        }
+        .card {
+            background: rgba(255,255,255,0.85);
+            padding: 40px 32px;
+            border-radius: 24px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+            max-width: 420px;
+            width: calc(100% - 32px);
+            position: relative;
+            z-index: 2;
+        }
+        .emoji { font-size: 72px; margin-bottom: 8px; animation: beat 1.2s infinite; }
+        @keyframes beat { 0%,100% { transform: scale(1);} 50% { transform: scale(1.15);} }
+        h1 { margin: 0 0 24px; font-size: 28px; }
+        .buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            min-height: 80px;
+        }
+        button {
+            border: none;
+            border-radius: 999px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 14px 32px;
+            transition: transform 0.15s ease;
+        }
+        button:hover { transform: scale(1.06); }
+        #yes { background: var(--accent); color: #fff; }
+        #no  { background: #fff; color: var(--accent); border: 2px solid var(--accent); }
+        #message { font-size: 20px; margin-top: 20px; min-height: 28px; font-weight: 600; }
+        .hidden { display: none; }
+        .heart {
+            position: fixed;
+            top: -40px;
+            font-size: 24px;
+            animation: fall linear forwards;
+            z-index: 1;
+            pointer-events: none;
+        }
+        @keyframes fall { to { transform: translateY(110vh) rotate(360deg); opacity: 0.8; } }
+    </style>
+</head>
+<body>
+
+<div class="card" id="card">
+    <div class="emoji" id="emoji">💌</div>
+    <h1 id="title">Will you be my date?</h1>
+    <div class="buttons" id="buttons">
+        <button id="yes">Yes 💖</button>
+        <button id="no">No 💔</button>
+    </div>
+    <div id="message"></div>
+</div>
+
+<!-- YouTube player (tiny, music only) -->
+<div id="player" style="position:fixed;bottom:0;right:0;width:2px;height:2px;opacity:0.01;pointer-events:none;"></div>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+    // ====== MUSIC SETTINGS ======
+    const VIDEO_ID = '3A1gqQfpu-s';
+    const CHORUS_START = 60;   // seconds where the chorus begins (change this!)
+    const CHORUS_END = 90;     // seconds where the chorus ends (change this!)
+    const NO_CLICKS_NEEDED = 3; // music starts on this many "No" clicks
+    // ============================
+
+    let ytPlayer = null;
+    let ytReady = false;
+
+    function onYouTubeIframeAPIReady() {
+        ytPlayer = new YT.Player('player', {
+            width: '200',
+            height: '200',
+            videoId: VIDEO_ID,
+            playerVars: { playsinline: 1, controls: 0, rel: 0 },
+            events: { onReady: () => { ytReady = true; } }
+        });
+    }
+
+    function playChorus() {
+        if (!ytReady) return;
+        ytPlayer.loadVideoById({
+            videoId: VIDEO_ID,
+            startSeconds: CHORUS_START,
+            endSeconds: CHORUS_END
+        });
+    }
+
+    function stopMusic() {
+        if (ytReady) ytPlayer.stopVideo();
+    }
+</script>
+
+<script>
+    const yes = document.getElementById('yes');
+    const no = document.getElementById('no');
+    const title = document.getElementById('title');
+    const emoji = document.getElementById('emoji');
+    const message = document.getElementById('message');
+    const buttons = document.getElementById('buttons');
+
+    let noCount = 0;
+    let yesScale = 1;
+
+    const noMessages = [
+        "Are you sure? 🥺",
+        "Pag-isipan mo ulit... 😢",
+        "Please? 🥹",
+        "Last chance! 😭",
+        "Sige na, pls! 💔"
+    ];
+
+    no.addEventListener('click', () => {
+        noCount++;
+
+        // Music only starts once "No" has been clicked 3 times
+        if (noCount >= NO_CLICKS_NEEDED) playChorus();
+
+        // Make the "Yes" button bigger and the "No" button smaller each time
+        yesScale += 0.25;
+        yes.style.transform = `scale(${yesScale})`;
+        yes.style.margin = `${yesScale * 6}px`;
+        no.style.fontSize = Math.max(10, 18 - noCount) + "px";
+
+        emoji.textContent = "🌀";
+        message.textContent = noMessages[Math.min(noCount - 1, noMessages.length - 1)];
+    });
+
+    yes.addEventListener('click', () => {
+        stopMusic();
+        title.textContent = "Yay!! See you on our date! 🥰";
+        emoji.textContent = "💕";
+        buttons.classList.add('hidden');
+        message.textContent = "You just made my day 💖";
+        for (let i = 0; i < 40; i++) setTimeout(spawnHeart, i * 80);
+        setInterval(spawnHeart, 300);
+    });
+
+    function spawnHeart() {
+        const h = document.createElement('div');
+        h.className = 'heart';
+        h.textContent = ['💖','💕','💗','❤️','🌸'][Math.floor(Math.random() * 5)];
+        h.style.left = Math.random() * 100 + 'vw';
+        h.style.animationDuration = (3 + Math.random() * 3) + 's';
+        document.body.appendChild(h);
+        setTimeout(() => h.remove(), 6500);
+    }
+</script>
+</body>
+</html>
