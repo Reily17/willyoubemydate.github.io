@@ -117,7 +117,7 @@
 
 <script>
     // ====== MUSIC SETTINGS ======
-    const CHORUS_START = 1;    // seconds where the chorus begins (change this!)
+    const CHORUS_START = 45;    // seconds where the chorus begins (change this!)
     const CHORUS_END = 75;      // seconds where the chorus ends (change this!)
     const NO_CLICKS_NEEDED = 3; // music starts on this many "No" clicks
     // ============================
@@ -182,8 +182,30 @@
         setTimeout(() => intro.remove(), 650);
     });
 
+    // Make the "No" button jump to a random spot on the screen
+    function moveNo() {
+        const pad = 12;
+        const maxX = window.innerWidth - no.offsetWidth - pad;
+        const maxY = window.innerHeight - no.offsetHeight - pad;
+        no.style.position = 'fixed';
+        no.style.left = Math.max(pad, Math.random() * maxX) + 'px';
+        no.style.top = Math.max(pad, Math.random() * maxY) + 'px';
+        no.style.zIndex = 5;
+    }
+
+    // After 3 "No" clicks it also runs away when he tries to touch it
+    ['mouseover', 'touchstart'].forEach(evt => {
+        no.addEventListener(evt, (e) => {
+            if (noCount >= NO_CLICKS_NEEDED) {
+                e.preventDefault();
+                moveNo();
+            }
+        }, { passive: false });
+    });
+
     no.addEventListener('click', () => {
         noCount++;
+        moveNo(); // jumps somewhere new every time it's clicked
 
         // Music only starts once "No" has been clicked 3 times
         if (noCount >= NO_CLICKS_NEEDED) playChorus();
